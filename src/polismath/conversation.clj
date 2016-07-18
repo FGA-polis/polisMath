@@ -28,6 +28,18 @@
 
 
 
+(defn get-ptpt-missing-vote-count [rating-mat]
+  ; [{pid,count}, {pid,count}...]
+  ;TODO? [2,0,5,1,5,5,2,0,3] where index is pid, and value is vote count
+  (map (fn [rowname]
+      (let [row (get-row-by-name rating-mat rowname)]
+        {
+          :n-missing-votes (count (filter nil? row))
+          :pid rowname
+        })
+    )
+    (rownames rating-mat)))
+
 (defn new-conv []
   "Minimal structure upon which to perform conversation updates"
   {:rating-mat (named-matrix)})
@@ -127,6 +139,9 @@
                   (update-nmat (:rating-mat conv)
                                (map (fn [v] (vector (:pid v) (:tid v) (:vote v))) keep-votes)))
 
+   :ptpt-missing-vote-count (plmb/fnk [rating-mat]
+                  (get-ptpt-missing-vote-count rating-mat))
+
    :n           (plmb/fnk [rating-mat]
                   (count (rownames rating-mat)))
 
@@ -180,6 +195,7 @@
        (int (/ (count (rownames data)) 12)))))
 
 
+
 (def small-conv-update-graph
   "For computing small conversation updates (those without need for base clustering)"
   (merge
@@ -193,6 +209,9 @@
              (wrapped-pca mat (:n-comps opts')
                           :start-vectors (get-in conv [:pca :comps])
                           :iters (:pca-iters opts')))
+
+      :ptpt-missing-vote-count (plmb/fnk [rating-mat]
+              (get-ptpt-missing-vote-count rating-mat))
 
       :proj (plmb/fnk [rating-mat pca]
               (sparsity-aware-project-ptpts (get-matrix rating-mat) pca))

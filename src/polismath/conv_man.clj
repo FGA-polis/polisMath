@@ -92,6 +92,7 @@
         :n
         :n-cmts
         :pca
+        :ptpt-missing-vote-count
         :repness
         :consensus
         :zid
