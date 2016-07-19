@@ -28,17 +28,26 @@
 
 
 
-(defn get-ptpt-missing-vote-count [rating-mat]
+(defn get-ptpt-missing-vote-count [rating-mat mod-out]
   ; [{pid,count}, {pid,count}...]
   ;TODO? [2,0,5,1,5,5,2,0,3] where index is pid, and value is vote count
-  (map (fn [rowname]
-      (let [row (get-row-by-name rating-mat rowname)]
-        {
-          :n-missing-votes (count (filter nil? row))
-          :pid rowname
-        })
-    )
-    (rownames rating-mat)))
+  (let [tids (colnames rating-mat)
+        tids-to-col-idx (get-col-index rating-mat)
+        tid-is-in-conv? (comp not (set mod-out)) ]
+    (map (fn [rowname]
+        (let [row (get-row-by-name rating-mat rowname)]
+          {
+            :n-missing-votes (reduce (fn [total tid]
+                                       (let [colidx (index tids-to-col-idx tid)
+                                             vote (nth row colidx)]
+                                         (+ total
+                                            (if (nil? vote) 1 0))))
+                                     0
+                                     (filter tid-is-in-conv? tids))
+            :pid rowname
+          })
+      )
+      (rownames rating-mat))))
 
 (defn new-conv []
   "Minimal structure upon which to perform conversation updates"
@@ -139,8 +148,8 @@
                   (update-nmat (:rating-mat conv)
                                (map (fn [v] (vector (:pid v) (:tid v) (:vote v))) keep-votes)))
 
-   :ptpt-missing-vote-count (plmb/fnk [rating-mat]
-                  (get-ptpt-missing-vote-count rating-mat))
+   :ptpt-missing-vote-count (plmb/fnk [conv rating-mat]
+                  (get-ptpt-missing-vote-count rating-mat (:mod-out conv)))
 
    :n           (plmb/fnk [rating-mat]
                   (count (rownames rating-mat)))
@@ -210,8 +219,8 @@
                           :start-vectors (get-in conv [:pca :comps])
                           :iters (:pca-iters opts')))
 
-      :ptpt-missing-vote-count (plmb/fnk [rating-mat]
-              (get-ptpt-missing-vote-count rating-mat))
+      :ptpt-missing-vote-count (plmb/fnk [conv rating-mat]
+              (get-ptpt-missing-vote-count rating-mat (:mod-out conv)))
 
       :proj (plmb/fnk [rating-mat pca]
               (sparsity-aware-project-ptpts (get-matrix rating-mat) pca))
