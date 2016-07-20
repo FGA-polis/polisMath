@@ -98,6 +98,7 @@
         :zid
         :user-vote-counts
         :votes-base
+        :conversation ;   TEMP!!!
         :group-votes})))
 
 
@@ -341,10 +342,12 @@
         (let [first-msg (<! msgbox) ; do this so we park efficiently
               msgs      (take-all! msgbox)
               msgs      (concat [first-msg] msgs)
-              {votes :votes mods :moderation}
+              {votes :votes mods :moderation conversations :conversation}
                         (split-batches msgs)]
           (when mods
             (swap! conv conv/mod-update mods))
+          (when conversations
+            (swap! conv conv/conversation-update (first conversations)))
           (swap! conv update-fn (or votes []) err-handler))
         (catch Exception e
           (log/error "Excpetion not handler by err-handler:" e)

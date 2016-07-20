@@ -63,6 +63,7 @@
         (log/info "Polling" type ">" @last-timestamp)
         (let [results (({:poll db/poll
                          ;:sim-poll sim-poll
+                         :conversation-poll db/conversation-poll
                          :mod-poll db/mod-poll} poll-fn)
                        @last-timestamp)
               grouped-batches (group-by :zid results)]
@@ -91,6 +92,7 @@
 
 (defn mk-topology [sim recompute]
   (let [spouts {"vote-spout" (spout-spec (poll-spout :votes :poll :created 1000))
+                "conversation-spout"  (spout-spec (poll-spout :conversation :conversation-poll :modified 5000))
                 "mod-spout"  (spout-spec (poll-spout :moderation :mod-poll :modified 5000))}
         ;spouts (if sim
                  ;(assoc spouts "sim-vote-spout" (spout-spec (poll-spout "votes" :sim-poll :created 1000)))

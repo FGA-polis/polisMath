@@ -442,6 +442,16 @@
           (assoc-in [:customs :votes] [])
           (dissoc :keep-votes))))))
 
+(defn conversation-update
+  "Take a conv record and a conversation row from the db and updates the conversation's :conversation attr"
+  [conv conversation]
+  (try
+    (update-in conv [:conversation] (fn [old-conversation] conversation))
+    (catch Exception e
+      (log/error "Problem running conversation-update with conversation:" conversation " : " e)
+      (.printStackTrace e)
+      conv)))
+
 
 (defn mod-update
   "Take a conversation record and a seq of moderation data and updates the conversation's mod-out attr"

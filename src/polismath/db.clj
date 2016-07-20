@@ -81,6 +81,19 @@
       (.printStackTrace e)
       [])))
 
+(defn conversation-poll
+  "Query for data from the conversations table since last-vote-timestamp, given a db-spec"
+  [last-vote-timestamp]
+  (try
+    (kdb/with-db (db-spec)
+      (ko/select conversations
+        (ko/fields [:zid :modified :strict_moderation])
+        (ko/where {:modified [> last-vote-timestamp]}))) 
+    (catch Exception e
+      (log/error "polling failed for conversations table " (.getMessage e))
+      (.printStackTrace e)
+      [])))
+
 
 (defn mod-poll
   "Moderation query: basically look for when things were last modified, since this is the only time they will
